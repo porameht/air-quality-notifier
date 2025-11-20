@@ -1,4 +1,3 @@
-use anyhow::Result;
 use tokio_cron_scheduler::{Job, JobScheduler};
 use tracing::{error, info};
 
@@ -11,11 +10,28 @@ use adapters::iqair::IQAirClient;
 use adapters::telegram::TelegramClient;
 use use_cases::{CheckAirQuality, NotifyAirQuality};
 
-#[tokio::main]
-async fn main() -> Result<()> {
-    tracing_subscriber::fmt::init();
+struct AirQualityService {
+    _scheduler: JobScheduler,
+}
 
-    let config = Config::from_env()?;
+#[shuttle_runtime::async_trait]
+impl shuttle_runtime::Service for AirQualityService {
+    async fn bind(self, _addr: std::net::SocketAddr) -> Result<(), shuttle_runtime::Error> {
+        info!("Worker started successfully");
+
+        loop {
+            tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
+        }
+    }
+}
+
+#[shuttle_runtime::main]
+async fn main(
+    #[shuttle_runtime::Secrets] secrets: shuttle_runtime::SecretStore,
+) -> Result<AirQualityService, shuttle_runtime::Error> {
+    let config = Config::from_secrets(secrets)
+        .map_err(shuttle_runtime::Error::Custom)?;
+
     info!("Starting Air Quality Notifier");
     info!("Monitoring {} locations", config.locations.len());
     for loc in &config.locations {
@@ -29,7 +45,9 @@ async fn main() -> Result<()> {
     let check_air_quality = CheckAirQuality::new(iqair_client);
     let notify_air_quality = NotifyAirQuality::new(telegram_client);
 
-    let scheduler = JobScheduler::new().await?;
+    let scheduler = JobScheduler::new()
+        .await
+        .map_err(|e| shuttle_runtime::Error::Custom(e.into()))?;
 
     let locations = config.locations.clone();
     let channel = config.telegram_channel.clone();
@@ -61,15 +79,20 @@ async fn main() -> Result<()> {
                 }
             }
         })
-    })?;
+    })
+    .map_err(|e| shuttle_runtime::Error::Custom(e.into()))?;
 
-    scheduler.add(job).await?;
-    scheduler.start().await?;
+    scheduler
+        .add(job)
+        .await
+        .map_err(|e| shuttle_runtime::Error::Custom(e.into()))?;
 
-    info!("Worker started successfully");
+    scheduler
+        .start()
+        .await
+        .map_err(|e| shuttle_runtime::Error::Custom(e.into()))?;
 
-    tokio::signal::ctrl_c().await?;
-    info!("Shutting down gracefully");
-
-    Ok(())
+    Ok(AirQualityService {
+        _scheduler: scheduler,
+    })
 }

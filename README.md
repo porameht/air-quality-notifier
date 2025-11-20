@@ -1,30 +1,47 @@
 # Air Quality Notifier
 
-Automated air quality monitoring with Telegram notifications.
+Automated air quality monitoring with Telegram notifications, deployed on [Shuttle](https://www.shuttle.rs/).
 
 ## Quick Start
 
-```bash
-# Setup
-cp .env.example .env
-# Edit .env with your API keys
+### Local Development
 
-# Run
-cargo run
+```bash
+# Setup configuration
+cp Secrets.toml.example Secrets.toml
+# Edit Secrets.toml with your API keys
+
+# Run locally
+shuttle run
+```
+
+### Deploy to Shuttle
+
+```bash
+# Login (first time only)
+shuttle login
+
+# Create project (first time only)
+shuttle project new
+
+# Deploy
+shuttle deploy
 ```
 
 ## Configuration
 
 Get your [IQAir API key](https://www.iqair.com/air-pollution-data-api) and [Telegram Bot token](https://t.me/botfather).
 
-```env
-IQAIR_API_KEY=your_api_key
-TELEGRAM_TOKEN=your_bot_token
-TELEGRAM_CHANNEL=your_channel_id
-CITIES=Ban Suan,Chon Buri
-STATE=Chon Buri
-COUNTRY=Thailand
-CRON_SCHEDULE=0 0 */3 * * *  # Every 3 hours
+Edit `Secrets.toml`:
+
+```toml
+IQAIR_API_KEY = "your_api_key"
+TELEGRAM_TOKEN = "your_bot_token"
+TELEGRAM_CHANNEL = "your_channel_id"
+CITIES = "Ban Suan,Chon Buri"
+STATE = "Chon Buri"
+COUNTRY = "Thailand"
+CRON_SCHEDULE = "0 0 */3 * * *"  # Every 3 hours
 ```
 
 ## Air Quality Levels
