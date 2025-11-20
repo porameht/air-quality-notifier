@@ -1,0 +1,25 @@
+# Rust
+/target
+Cargo.lock
+*.pdb
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+
+.claude
