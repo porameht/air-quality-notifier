@@ -29,8 +29,7 @@ impl shuttle_runtime::Service for AirQualityService {
 async fn main(
     #[shuttle_runtime::Secrets] secrets: shuttle_runtime::SecretStore,
 ) -> Result<AirQualityService, shuttle_runtime::Error> {
-    let config = Config::from_secrets(secrets)
-        .map_err(shuttle_runtime::Error::Custom)?;
+    let config = Config::from_secrets(secrets).map_err(shuttle_runtime::Error::Custom)?;
 
     info!("Starting Air Quality Notifier");
     info!("Monitoring {} locations", config.locations.len());
