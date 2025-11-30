@@ -30,7 +30,7 @@ shuttle deploy
 
 ## Configuration
 
-Get your [IQAir API key](https://www.iqair.com/air-pollution-data-api) and [Telegram Bot token](https://t.me/botfather).
+Get your [IQAir API key](https://www.iqair.com/air-pollution-data-api) and Get Token from [Telegram Bot token](https://t.me/botfather).
 
 Edit `Secrets.toml`:
 
