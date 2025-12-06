@@ -34,17 +34,22 @@ impl<N: NotificationGateway> NotifyAirQuality<N> {
 
     fn format_message(&self, data: &AirQualityData) -> String {
         let level = AirQualityLevel::from_aqi(data.aqi);
+        let (city, state) = data.location.city_state();
+        let location_str = if state.is_empty() {
+            city
+        } else {
+            format!("{}, {}", city, state)
+        };
 
         format!(
             "{} *{}*\n\n\
-            📍 {}, {}\n\
+            📍 {}\n\
             AQI *{}* · PM2.5 {} µg/m³\n\
             🌡️ {}°C · 💧 {}%\n\n\
             {}",
             level.emoji(),
             level.thai_description(),
-            data.location.city,
-            data.location.state,
+            location_str,
             data.aqi,
             data.pm25,
             data.temperature,

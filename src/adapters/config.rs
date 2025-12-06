@@ -25,7 +25,7 @@ impl Config {
 
         let locations = cities
             .split(',')
-            .map(|city| Location::new(city.trim(), &state, &country))
+            .map(|city| Location::from_city(city.trim(), &state, &country))
             .collect();
 
         Ok(Self {

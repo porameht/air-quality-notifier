@@ -35,7 +35,7 @@ async fn main(
     info!("Starting Air Quality Notifier");
     info!("Monitoring {} locations", config.locations.len());
     for loc in &config.locations {
-        info!("  - {}, {}", loc.city, loc.state);
+        info!("  - {}", loc.name);
     }
     info!("Schedule: {}", config.cron_schedule);
 
@@ -47,23 +47,11 @@ async fn main(
 
     // Start Telegram bot in background
     let bot_checker = CheckAirQuality::new(iqair_client);
-    let state = config
-        .locations
-        .first()
-        .map(|l| l.state.clone())
-        .unwrap_or_else(|| "Chon Buri".to_string());
-    let country = config
-        .locations
-        .first()
-        .map(|l| l.country.clone())
-        .unwrap_or_else(|| "Thailand".to_string());
 
     let bot_handler = BotHandler::new(
         config.telegram_token.clone(),
         bot_checker,
         config.locations.clone(),
-        state,
-        country,
     );
     tokio::spawn(async move {
         bot_handler.run().await;
@@ -88,17 +76,17 @@ async fn main(
                     Ok(data) => {
                         info!(
                             "Air quality checked: {} PM2.5={} AQI={}",
-                            data.location.city, data.pm25, data.aqi
+                            data.location.name, data.pm25, data.aqi
                         );
                         if let Err(e) = notifier.execute(&chat_id, &data).await {
                             error!(
                                 "Failed to send notification for {}: {}",
-                                data.location.city, e
+                                data.location.name, e
                             );
                         }
                     }
                     Err(e) => {
-                        error!("Failed to check air quality for {}: {}", location.city, e);
+                        error!("Failed to check air quality for {}: {}", location.name, e);
                     }
                 }
             }

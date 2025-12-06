@@ -41,7 +41,7 @@ impl<R: AirQualityRepository> CheckAirQuality<R> {
         let pm25 = AqiConverter::estimate_pm25_from_aqi(raw_data.aqi);
 
         Ok(AirQualityData {
-            location: Location::new(raw_data.city, raw_data.state, location.country),
+            location: Location::from_city(raw_data.city, raw_data.state, "Thailand"),
             aqi: raw_data.aqi,
             pm25,
             temperature: raw_data.temperature,

@@ -2,21 +2,62 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Location {
-    pub city: String,
-    pub state: String,
-    pub country: String,
+    pub name: String,
+    pub query: LocationQuery,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum LocationQuery {
+    City {
+        city: String,
+        state: String,
+        country: String,
+    },
+    Coordinates {
+        lat: f64,
+        lon: f64,
+    },
 }
 
 impl Location {
-    pub fn new(
+    pub fn from_city(
         city: impl Into<String>,
         state: impl Into<String>,
         country: impl Into<String>,
     ) -> Self {
+        let city = city.into();
         Self {
-            city: city.into(),
-            state: state.into(),
-            country: country.into(),
+            name: city.clone(),
+            query: LocationQuery::City {
+                city,
+                state: state.into(),
+                country: country.into(),
+            },
+        }
+    }
+
+    pub fn from_coordinates(name: impl Into<String>, lat: f64, lon: f64) -> Self {
+        Self {
+            name: name.into(),
+            query: LocationQuery::Coordinates { lat, lon },
+        }
+    }
+
+    pub fn city_state(&self) -> (String, String) {
+        match &self.query {
+            LocationQuery::City { city, state, .. } => (city.clone(), state.clone()),
+            LocationQuery::Coordinates { .. } => (self.name.clone(), String::new()),
+        }
+    }
+
+    pub fn city_state_country(&self) -> (String, String, String) {
+        match &self.query {
+            LocationQuery::City { city, state, country } => {
+                (city.clone(), state.clone(), country.clone())
+            }
+            LocationQuery::Coordinates { .. } => {
+                (self.name.clone(), String::new(), String::new())
+            }
         }
     }
 }

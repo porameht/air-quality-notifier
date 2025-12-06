@@ -23,8 +23,6 @@ pub struct BotHandler<R: AirQualityRepository + Clone + 'static> {
     bot: Bot,
     checker: Arc<CheckAirQuality<R>>,
     locations: Arc<Vec<Location>>,
-    country: String,
-    state: String,
 }
 
 impl<R: AirQualityRepository + Clone + 'static> BotHandler<R> {
@@ -32,30 +30,22 @@ impl<R: AirQualityRepository + Clone + 'static> BotHandler<R> {
         token: String,
         checker: CheckAirQuality<R>,
         locations: Vec<Location>,
-        state: String,
-        country: String,
     ) -> Self {
         Self {
             bot: Bot::new(token),
             checker: Arc::new(checker),
             locations: Arc::new(locations),
-            country,
-            state,
         }
     }
 
     pub async fn run(self) {
         let checker = self.checker;
         let locations = self.locations;
-        let state = self.state;
-        let country = self.country;
 
         let handler = Update::filter_message().filter_command::<Command>().endpoint(
             move |bot: Bot, msg: Message, cmd: Command| {
                 let checker = checker.clone();
                 let locations = locations.clone();
-                let state = state.clone();
-                let country = country.clone();
 
                 async move {
                     match cmd {
@@ -69,10 +59,10 @@ impl<R: AirQualityRepository + Clone + 'static> BotHandler<R> {
                         Command::Check(city) => {
                             let city = city.trim();
                             if city.is_empty() {
-                                bot.send_message(msg.chat.id, "กรุณาระบุชื่อเมือง เช่น /check Ban Suan")
+                                bot.send_message(msg.chat.id, "กรุณาระบุชื่อเมือง เช่น /check Ban Suan หรือ /check 13.46,101.09")
                                     .await?;
                             } else {
-                                let location = Location::new(city, &state, &country);
+                                let location = parse_location_input(city);
                                 handle_check(&bot, &msg, &checker, &location).await;
                             }
                         }
@@ -89,6 +79,21 @@ impl<R: AirQualityRepository + Clone + 'static> BotHandler<R> {
             .dispatch()
             .await;
     }
+}
+
+fn parse_location_input(input: &str) -> Location {
+    // Check if input looks like coordinates: "13.46,101.09"
+    let parts: Vec<&str> = input.split(',').collect();
+    if parts.len() == 2 {
+        if let (Ok(lat), Ok(lon)) = (parts[0].trim().parse::<f64>(), parts[1].trim().parse::<f64>()) {
+            // Validate reasonable lat/lon ranges
+            if (-90.0..=90.0).contains(&lat) && (-180.0..=180.0).contains(&lon) {
+                return Location::from_coordinates(format!("{:.2},{:.2}", lat, lon), lat, lon);
+            }
+        }
+    }
+    // Default: treat as city name with default state/country
+    Location::from_city(input, "Chon Buri", "Thailand")
 }
 
 async fn handle_pm25<R: AirQualityRepository>(
@@ -111,16 +116,21 @@ async fn handle_check<R: AirQualityRepository>(
     match checker.execute(location.clone()).await {
         Ok(data) => {
             let level = AirQualityLevel::from_aqi(data.aqi);
+            let (city, state) = data.location.city_state();
+            let location_str = if state.is_empty() {
+                city
+            } else {
+                format!("{}, {}", city, state)
+            };
             let message = format!(
                 "{} <b>{}</b>\n\n\
-                📍 {}, {}\n\
+                📍 {}\n\
                 AQI <b>{}</b> · PM2.5 {} µg/m³\n\
                 🌡️ {}°C · 💧 {}%\n\n\
                 {}",
                 level.emoji(),
                 level.thai_description(),
-                data.location.city,
-                data.location.state,
+                location_str,
                 data.aqi,
                 data.pm25,
                 data.temperature,
@@ -137,7 +147,7 @@ async fn handle_check<R: AirQualityRepository>(
             }
         }
         Err(e) => {
-            let error_msg = format!("❌ ไม่สามารถดึงข้อมูล {} ได้: {}", location.city, e);
+            let error_msg = format!("❌ ไม่สามารถดึงข้อมูล {} ได้: {}", location.name, e);
             if let Err(e) = bot.send_message(msg.chat.id, error_msg).await {
                 error!("Failed to send error message: {}", e);
             }
