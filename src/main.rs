@@ -5,6 +5,7 @@ mod adapters;
 mod domain;
 mod use_cases;
 
+use adapters::bot::BotHandler;
 use adapters::config::Config;
 use adapters::iqair::IQAirClient;
 use adapters::telegram::TelegramClient;
@@ -41,8 +42,32 @@ async fn main(
     let iqair_client = IQAirClient::new(config.iqair_token.clone());
     let telegram_client = TelegramClient::new(config.telegram_token.clone());
 
-    let check_air_quality = CheckAirQuality::new(iqair_client);
+    let check_air_quality = CheckAirQuality::new(iqair_client.clone());
     let notify_air_quality = NotifyAirQuality::new(telegram_client);
+
+    // Start Telegram bot in background
+    let bot_checker = CheckAirQuality::new(iqair_client);
+    let state = config
+        .locations
+        .first()
+        .map(|l| l.state.clone())
+        .unwrap_or_else(|| "Chon Buri".to_string());
+    let country = config
+        .locations
+        .first()
+        .map(|l| l.country.clone())
+        .unwrap_or_else(|| "Thailand".to_string());
+
+    let bot_handler = BotHandler::new(
+        config.telegram_token.clone(),
+        bot_checker,
+        config.locations.clone(),
+        state,
+        country,
+    );
+    tokio::spawn(async move {
+        bot_handler.run().await;
+    });
 
     let scheduler = JobScheduler::new()
         .await

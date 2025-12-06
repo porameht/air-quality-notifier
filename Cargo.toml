@@ -24,3 +24,4 @@ urlencoding = "2.1"
 async-trait = "0.1"
 shuttle-runtime = "0.57.0"
 shuttle-service = "0.57.0"
+teloxide = { version = "0.13", features = ["macros"] }
