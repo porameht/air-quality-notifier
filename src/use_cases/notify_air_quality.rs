@@ -33,29 +33,23 @@ impl<N: NotificationGateway> NotifyAirQuality<N> {
     }
 
     fn format_message(&self, data: &AirQualityData) -> String {
-        let level = AirQualityLevel::from_pm25(data.pm25);
+        let level = AirQualityLevel::from_aqi(data.aqi);
 
         format!(
-            "🌫️ *รายงานคุณภาพอากาศ*\n\n\
-            {} *ระดับ: {}*\n\
-            ━━━━━━━━━━━━━━━━━━\n\
+            "{} *{}*\n\n\
             📍 {}, {}\n\
-            🌫️ PM2.5: *{} µg/m³*\n\
-            📊 AQI: {}\n\
-            🌡️ {}°C | 💧 {}%\n\
-            ━━━━━━━━━━━━━━━━━━\n\
-            {}\n\n\
-            ⏰ {}",
+            AQI *{}* · PM2.5 {} µg/m³\n\
+            🌡️ {}°C · 💧 {}%\n\n\
+            {}",
             level.emoji(),
             level.thai_description(),
             data.location.city,
             data.location.state,
-            data.pm25,
             data.aqi,
+            data.pm25,
             data.temperature,
             data.humidity,
             level.health_warning(),
-            chrono::Local::now().format("%Y-%m-%d %H:%M:%S")
         )
     }
 }

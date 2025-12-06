@@ -40,12 +40,12 @@ pub enum AirQualityLevel {
 }
 
 impl AirQualityLevel {
-    pub fn from_pm25(pm25: i32) -> Self {
-        match pm25 {
-            0..=25 => Self::Good,
-            26..=37 => Self::Moderate,
-            38..=50 => Self::UnhealthyForSensitive,
-            51..=90 => Self::Unhealthy,
+    pub fn from_aqi(aqi: i32) -> Self {
+        match aqi {
+            0..=50 => Self::Good,
+            51..=100 => Self::Moderate,
+            101..=150 => Self::UnhealthyForSensitive,
+            151..=200 => Self::Unhealthy,
             _ => Self::VeryUnhealthy,
         }
     }
