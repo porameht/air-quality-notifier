@@ -92,8 +92,33 @@ fn parse_location_input(input: &str) -> Location {
             }
         }
     }
-    // Default: treat as city name with default state/country
-    Location::from_city(input, "Chon Buri", "Thailand")
+
+    // Map Thai names to English
+    let city = map_thai_to_english(input);
+    Location::from_city(&city, "Chon Buri", "Thailand")
+}
+
+fn map_thai_to_english(input: &str) -> String {
+    let mappings = [
+        ("พานทอง", "Phan Thong"),
+        ("บ้านสวน", "Ban Suan"),
+        ("ชลบุรี", "Chon Buri"),
+        ("ศรีราชา", "Si Racha"),
+        ("พัทยา", "Pattaya"),
+        ("บางแสน", "Bang Saen"),
+        ("แหลมฉบัง", "Laem Chabang"),
+        ("อมตะ", "Amata"),
+        ("บ่อวิน", "Bo Win"),
+        ("สัตหีบ", "Sattahip"),
+    ];
+
+    for (thai, english) in mappings {
+        if input.eq_ignore_ascii_case(thai) || input == thai {
+            return english.to_string();
+        }
+    }
+
+    input.to_string()
 }
 
 async fn handle_pm25<R: AirQualityRepository>(
