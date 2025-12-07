@@ -44,8 +44,8 @@ impl<N: NotificationGateway> NotifyAirQuality<N> {
         format!(
             "{} *{}*\n\n\
             📍 {}\n\
-            AQI *{}* · PM2.5 {} µg/m³\n\
-            🌡️ {}°C · 💧 {}%\n\n\
+            ค่า AQI *{}* · ฝุ่น PM2.5 {} µg/m³\n\
+            อุณหภูมิ {}°C · ความชื้น {}%\n\n\
             {}",
             level.emoji(),
             level.thai_description(),
